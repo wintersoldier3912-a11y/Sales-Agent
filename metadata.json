@@ -1,0 +1,5 @@
+{
+  "name": "Sales Proposal Copilot Agent",
+  "description": "A Microsoft 365 Copilot-inspired AI agent for automating sales proposal generation, approvals, and client communication using CRM data and pricing fixtures.",
+  "requestFramePermissions": []
+}
