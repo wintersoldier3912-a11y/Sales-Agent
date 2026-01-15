@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   UserRole, 
   Lead, 
@@ -8,7 +8,8 @@ import {
   ApprovalRequest, 
   Message,
   LineItem,
-  Version
+  Version,
+  ProposalTemplate
 } from './types';
 import { SAMPLE_LEAD, PRICEBOOK, INITIAL_PROPOSAL_TEXT } from './constants';
 import { generateProposalContent, generateDraftEmail } from './services/geminiService';
@@ -23,6 +24,9 @@ import TopNav from './components/TopNav';
 const App: React.FC = () => {
   const [role, setRole] = useState<UserRole>(UserRole.SALES_REP);
   const [lead, setLead] = useState<Lead | null>(null);
+  const [templates, setTemplates] = useState<ProposalTemplate[]>([
+    { id: 'default', name: 'Standard Contoso Template', ...INITIAL_PROPOSAL_TEXT }
+  ]);
   const [proposal, setProposal] = useState<ProposalContent>({
     ...INITIAL_PROPOSAL_TEXT,
     pricing: [],
@@ -40,15 +44,23 @@ const App: React.FC = () => {
     setMessages(prev => [...prev, { role, content, timestamp: new Date() }]);
   };
 
-  const saveVersion = (proposalState: ProposalContent, label: string) => {
-    const newVersion: Version = {
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toLocaleString(),
-      proposal: JSON.parse(JSON.stringify(proposalState)),
-      label
-    };
-    setVersions(prev => [newVersion, ...prev]);
-  };
+  const saveVersion = useCallback((proposalState: ProposalContent, label: string) => {
+    setVersions(prev => {
+      const lastVersion = prev[0];
+      // Skip if state hasn't changed from last recorded version
+      if (lastVersion && JSON.stringify(lastVersion.proposal) === JSON.stringify(proposalState)) {
+        return prev;
+      }
+
+      const newVersion: Version = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toLocaleString(),
+        proposal: JSON.parse(JSON.stringify(proposalState)),
+        label
+      };
+      return [newVersion, ...prev];
+    });
+  }, []);
 
   const handleIngestLead = () => {
     addMessage('user', 'Ingest lead from CRM for Acme Manufacturing');
@@ -69,7 +81,6 @@ const App: React.FC = () => {
       { id: '3', name: 'Onsite Install (Days)', price: PRICEBOOK.ONSITE_INSTALL, quantity: 5 }
     ];
 
-    // AI summary generation based on lead pain points and scope
     const aiSummary = await generateProposalContent(lead);
     
     const newProposal: ProposalContent = {
@@ -81,7 +92,33 @@ const App: React.FC = () => {
 
     setProposal(newProposal);
     saveVersion(newProposal, "AI Draft Generated");
-    addMessage('assistant', "I've synthesized an Executive Summary focused on Acme's throughput bottlenecks and rework rates. The pricing table has also been populated with initial requirements.");
+    addMessage('assistant', "I've synthesized an Executive Summary focused on Acme's throughput bottlenecks. The pricing table has also been populated.");
+  };
+
+  const handleSaveTemplate = (name: string) => {
+    const newTemplate: ProposalTemplate = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      executiveSummary: proposal.executiveSummary,
+      scopeOfWork: proposal.scopeOfWork,
+      deliverables: proposal.deliverables,
+      timeline: proposal.timeline,
+      terms: proposal.terms
+    };
+    setTemplates(prev => [...prev, newTemplate]);
+    addMessage('system', `Saved current proposal structure as template: "${name}"`);
+  };
+
+  const handleApplyTemplate = (template: ProposalTemplate) => {
+    setProposal(prev => ({
+      ...prev,
+      executiveSummary: template.executiveSummary,
+      scopeOfWork: template.scopeOfWork,
+      deliverables: template.deliverables,
+      timeline: template.timeline,
+      terms: template.terms
+    }));
+    addMessage('system', `Applied template: "${template.name}"`);
   };
 
   const handleRequestApproval = (note: string, requestedDiscount?: number) => {
@@ -150,6 +187,10 @@ const App: React.FC = () => {
             approvalStatus={approval?.status || ApprovalStatus.DRAFT}
             versions={versions}
             onRestore={handleRestoreVersion}
+            onAutoSave={saveVersion}
+            templates={templates}
+            onSaveTemplate={handleSaveTemplate}
+            onApplyTemplate={handleApplyTemplate}
           />
         </div>
 

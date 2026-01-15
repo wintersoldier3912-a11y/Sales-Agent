@@ -26,6 +26,13 @@ const ApprovalPanel: React.FC<ApprovalPanelProps> = ({ role, approval, onAction,
     return <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status]}`}>{status}</span>;
   };
 
+  const handleExport = (type: 'PDF' | 'DOCX') => {
+    // In a real app, this would use libraries like jspdf or docx.js
+    // For this prototype, we simulate the download trigger.
+    const filename = `Proposal_Automation_${new Date().getTime()}.${type.toLowerCase()}`;
+    alert(`Generating ${type} export...\nFile "${filename}" has been prepared for download.`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2 pb-2 border-b border-[#EDEBE9]">
@@ -123,13 +130,22 @@ const ApprovalPanel: React.FC<ApprovalPanelProps> = ({ role, approval, onAction,
       {canFinalize && (
         <div className="pt-4 space-y-3">
             <h4 className="text-xs font-bold text-[#605E5C] uppercase">Actions</h4>
-            <button 
-                onClick={() => alert('Proposal exported as PDF. Check your downloads.')}
-                className="w-full flex items-center justify-center space-x-2 bg-white border border-[#EDEBE9] py-2 rounded text-xs font-semibold hover:bg-[#FAF9F8]"
-            >
-                <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l5 5a1 1 0 01.293.707V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
-                <span>Export to PDF</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                  onClick={() => handleExport('PDF')}
+                  className="flex items-center justify-center space-x-1 bg-white border border-[#EDEBE9] py-2 rounded text-xs font-semibold hover:bg-[#FAF9F8]"
+              >
+                  <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l5 5a1 1 0 01.293.707V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                  <span>PDF</span>
+              </button>
+              <button 
+                  onClick={() => handleExport('DOCX')}
+                  className="flex items-center justify-center space-x-1 bg-white border border-[#EDEBE9] py-2 rounded text-xs font-semibold hover:bg-[#FAF9F8]"
+              >
+                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l5 5a1 1 0 01.293.707V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                  <span>DOCX</span>
+              </button>
+            </div>
             <button 
                 onClick={onComposeEmail}
                 className="w-full flex items-center justify-center space-x-2 bg-[#0078D4] text-white py-2 rounded text-xs font-semibold hover:bg-[#005A9E]"

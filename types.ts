@@ -26,6 +26,16 @@ export interface Version {
   label: string;
 }
 
+export interface ProposalTemplate {
+  id: string;
+  name: string;
+  executiveSummary: string;
+  scopeOfWork: string;
+  deliverables: string;
+  timeline: string;
+  terms: string;
+}
+
 export interface ProposalContent {
   executiveSummary: string;
   scopeOfWork: string;
